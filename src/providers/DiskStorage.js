@@ -9,6 +9,8 @@ class DiskStorage{
             path.resolve(uploadConfig.UPLOADS_FOLDER, file)
         )
 
+        fs.promises.re
+
         return file
     }
 

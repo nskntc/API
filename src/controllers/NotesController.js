@@ -11,24 +11,27 @@ class NotesController {
       user_id
     })
 
-    const linksInsert = links.map(link => {
-      return {
-        note_id,
-        url: link
-      }
-    })
+    if(links[0]) {
+      const linksInsert = links.map(link => {
+        return {
+          note_id,
+          url: link
+        }
+      })
+      await knex("links").insert(linksInsert)
+    }
 
-    await knex("links").insert(linksInsert)
-
-    const tagsInsert = tags.map(name => {
-      return {
-        note_id,
-        name,
-        user_id
-      }
-    })
-
-    await knex("tags").insert(tagsInsert)
+    if(tags[0]) {
+      const tagsInsert = tags.map(name => {
+        return {
+          note_id,
+          name,
+          user_id
+        }
+      })
+  
+      await knex("tags").insert(tagsInsert)
+    }
 
     response.json()
   }
@@ -65,16 +68,17 @@ class NotesController {
       const filterTags = tags.split(',').map(tag => tag.trim())
 
       notes = await knex("tags")
-        .select([
-          "notes.id",
-          "notes.title",
-          "notes.user_id",
-        ])
-        .where("notes.user_id", user_id)
-        .whereLike("notes.title", `%${title}%`)
-        .whereIn("name", filterTags)
-        .innerJoin("notes", "notes.id", "tags.note_id")
-        .orderBy("notes.title")
+      .select([
+        "notes.id",
+        "notes.title",
+        "notes.user_id",
+      ])
+      .where("notes.user_id", user_id)
+      .whereLike("notes.title", `%${title}%`)
+      .whereIn("name", filterTags)
+      .innerJoin("notes", "notes.id", "tags.note_id")
+      .groupBy("notes.id")
+      .orderBy("notes.title")
         
     } else {
       notes = await knex("notes")
@@ -87,10 +91,10 @@ class NotesController {
     const notesWhithTags = notes.map(note => {
       const noteTags = userTags.filter(tag => tag.note_id === note.id)
 
-      return {
-        ...note,
-        tags: noteTags
-      }
+        return {
+          ...note,
+          tags: noteTags
+        }
     })
 
     return response.json(notesWhithTags)
